@@ -21,6 +21,12 @@ on:
       TFSTATE_BUCKET:
         description: TFSTATE_BUCKET
         required: true
+defaults:                                         # デフォルトシェル
+  run:
+    shell: bash
+concurrency:                                      # 自動キャンセル
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 
 env:
