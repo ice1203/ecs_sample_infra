@@ -7,6 +7,13 @@ on:
         type: string
         required: true
         description: 'Destroy the Terraform main.tf path'
+defaults:                                         # デフォルトシェル
+  run:
+    shell: bash
+concurrency:                                      # 自動キャンセル
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   ROOT_MODULE_PATH: ${{ github.event.inputs.destroy-target-path }}
   APPLY_ROLE_ARN: ${{ secrets.GITHUBACTIONS_ROLE }}
