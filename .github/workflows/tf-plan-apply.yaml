@@ -55,7 +55,7 @@ jobs:
     - name: Get Terraform Version
       id: tf-version
       run: |
-        echo "TERRAFORM_VERSION=$(cat .terraform-version)" >> $GITHUB_OUTPUT
+        echo "TERRAFORM_VERSION=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -97,7 +97,10 @@ jobs:
     - name: TFLint ExitCode Check
       id: tflint-exitcode-check
       run: |
-        exit ${{ steps.tflint.outputs.exitcode }}
+        if [ ${{ steps.tflint.outputs.exitcode }} != "0" ]; then
+          echo "TFLint found some issues"
+          exit 1
+        fi
 
     - name: Trivy Scan
       id: trivy-scan
@@ -117,7 +120,7 @@ jobs:
         export exitcode=0
         terraform plan -detailed-exitcode -no-color -out=tfplan || export exitcode=$?
 
-        echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
+        echo "exitcode=$exitcode" >> "$GITHUB_OUTPUT"
 
         if [ $exitcode -eq 1 ]; then
           echo Terraform Plan Failed!
@@ -153,58 +156,66 @@ jobs:
 
         if [ "${{ steps.tf-plan.outcome}}" = "success" ]; then
           pushd ${{ env.ROOT_MODULE_PATH }}
-          TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+          TERRAFORM_PLAN="$(terraform show -no-color tfplan)"
           popd
         fi
 
-        delimiter="$(openssl rand -hex 8)"
-        echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
-        echo "#### Terraform Format and Style :pencil2: $(get_result ${{ steps.tf-fmt.outcome }})" >> $GITHUB_OUTPUT
-        echo "#### Terraform Validate :hammer_and_wrench: $(get_result ${{ steps.tf-validate.outcome }})" >> $GITHUB_OUTPUT
-        echo "#### TFLint Check :shirt: $(get_result ${{ steps.tflint-exitcode-check.outcome }})" >> $GITHUB_OUTPUT
-        echo "#### Trivy Scan :shield: $(get_result ${{ steps.trivy-scan.outcome }})" >> $GITHUB_OUTPUT
-        echo "#### Terraform Plan :page_facing_up: $(get_result ${{ steps.tf-plan.outcome }})" >> $GITHUB_OUTPUT
+        {
+          delimiter="$(openssl rand -hex 8)"
+          echo "summary<<${delimiter}"
+          echo "#### Terraform Format and Style :pencil2: $(get_result ${{ steps.tf-fmt.outcome }})"
+          echo "#### Terraform Validate :hammer_and_wrench: $(get_result ${{ steps.tf-validate.outcome }})"
+          echo "#### TFLint Check :shirt: $(get_result ${{ steps.tflint-exitcode-check.outcome }})"
+          echo "#### Trivy Scan :shield: $(get_result ${{ steps.trivy-scan.outcome }})"
+          echo "#### Terraform Plan :page_facing_up: $(get_result ${{ steps.tf-plan.outcome }})"
 
-        echo "---" >> $GITHUB_OUTPUT
+          echo "---"
+        } >> "$GITHUB_OUTPUT"
 
         if [ "${{ steps.tflint-exitcode-check.outcome }}" = "failure" ]; then
-          echo "### TFLint Result" >> $GITHUB_OUTPUT
-          echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo '```' >> $GITHUB_OUTPUT
-          echo "${{ steps.tflint.outputs.stdout }}" >> $GITHUB_OUTPUT
-          echo '```' >> $GITHUB_OUTPUT
-          echo "</details>" >> $GITHUB_OUTPUT
+          {
+            echo "### TFLint Result"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```'
+            echo "${{ steps.tflint.outputs.stdout }}"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_OUTPUT"
         fi
 
         if [ "${{ steps.trivy-scan.outcome }}" = "failure" ]; then
-          echo "### Trivy Scan Result" >> $GITHUB_OUTPUT
-          echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo '```' >> $GITHUB_OUTPUT
-          cat trivy-table >> $GITHUB_OUTPUT
-          echo '```' >> $GITHUB_OUTPUT
-          echo "</details>" >> $GITHUB_OUTPUT
+          {
+            echo "### Trivy Scan Result"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```'
+            cat trivy-table
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_OUTPUT"
         fi
 
         if [ "${{ steps.tf-plan.outcome}}" = "success" ]; then
-          echo "### Terraform Plan" >> $GITHUB_OUTPUT
-          echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo '```' >> $GITHUB_OUTPUT
-          echo "$TERRAFORM_PLAN" >> $GITHUB_OUTPUT
-          echo '```' >> $GITHUB_OUTPUT
-          echo "</details>" >> $GITHUB_OUTPUT
+          {
+            echo "### Terraform Plan"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```'
+            echo "$TERRAFORM_PLAN"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_OUTPUT"
         fi
 
-        echo "${delimiter}" >> $GITHUB_OUTPUT
+        echo "${delimiter}" >> "$GITHUB_OUTPUT"
 
     - name: Publish Terraform CI Result to Task Summary
       if: always()
       env:
         SUMMARY: ${{ steps.string-output.outputs.summary }}
       run: |
-        echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
+        echo "$SUMMARY" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Push Terraform Output to PR
       if: always() && github.ref != 'refs/heads/main'
@@ -240,7 +251,7 @@ jobs:
     - name: Get Terraform Version
       id: tf-version
       run: |
-        echo "TERRAFORM_VERSION=$(cat .terraform-version)" >> $GITHUB_OUTPUT
+        echo "TERRAFORM_VERSION=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
