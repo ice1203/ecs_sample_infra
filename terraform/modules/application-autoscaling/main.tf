@@ -1,12 +1,12 @@
 # application autoscaling
 # IAM Role
-resource "aws_iam_service_linked_role" "ecs_service_autoscaling" {
-  aws_service_name = "ecs.application-autoscaling.amazonaws.com"
-}
+# resource "aws_iam_service_linked_role" "ecs_service_autoscaling" {
+#   aws_service_name = "ecs.application-autoscaling.amazonaws.com"
+# }
 # 既にサービスリンクロールが作成されている場合は以下のように記述
-#data "aws_iam_role" "ecs_service_autoscaling" {
-#  name = "AWSServiceRoleForApplicationAutoScaling_ECSService"
-#}
+data "aws_iam_role" "ecs_service_autoscaling" {
+  name = "AWSServiceRoleForApplicationAutoScaling_ECSService"
+}
 
 ## application autoscaling target
 resource "aws_appautoscaling_target" "ecs_service" {
@@ -17,9 +17,9 @@ resource "aws_appautoscaling_target" "ecs_service" {
   scalable_dimension = "ecs:service:DesiredCount"
 
   # オートスケーリングを実行するサービスリンクロールArn
-  role_arn = aws_iam_service_linked_role.ecs_service_autoscaling.arn
+  # role_arn = aws_iam_service_linked_role.ecs_service_autoscaling.arn
   # 既にサービスリンクロールが作成されている場合は以下のように記述
-  #role_arn           = data.aws_iam_role.ecs_service_autoscaling.arn
+  role_arn = data.aws_iam_role.ecs_service_autoscaling.arn
 
   # オートスケーリングさせるECSタスクの最小値と最大値を指定
   min_capacity = var.min_capacity
