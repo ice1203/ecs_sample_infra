@@ -24,9 +24,6 @@ on:
 defaults:                                         # デフォルトシェル
   run:
     shell: bash
-concurrency:                                      # 自動キャンセル
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
 
 
 env:
