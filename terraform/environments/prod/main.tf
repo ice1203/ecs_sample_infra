@@ -78,7 +78,7 @@ module "application-autoscaling" {
   subsys_name      = "frontend"
   ecs_cluster_name = module.frontend-ecs.ecs_cluster_name
   ecs_service_name = local.ecs_service_name
-  min_capacity     = 2
-  max_capacity     = 3
+  min_capacity     = 1
+  max_capacity     = 1
 
 }
