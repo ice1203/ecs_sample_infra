@@ -26,7 +26,7 @@ defaults:                                         # デフォルトシェル
     shell: bash
 concurrency:                                      # 自動キャンセル
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 
 env:
