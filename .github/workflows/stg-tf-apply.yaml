@@ -1,0 +1,41 @@
+name: 'stg-Terraform Apply'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - 'terraform/**'
+  workflow_dispatch:
+defaults:                                         # デフォルトシェル
+  run:
+    shell: bash
+concurrency:                                      # 自動キャンセル
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  call-reusable-workflow:
+    uses: ./.github/workflows/tf-apply.yaml
+    with:
+      root_dir_path: terraform
+      root_module_path: terraform/environments/prod
+    secrets:
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      GITHUBACTIONS_ROLE: ${{ secrets.GITHUBACTIONS_ROLE }}
+      TFSTATE_BUCKET: ${{ secrets.TFSTATE_BUCKET }}
